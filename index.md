@@ -5,5 +5,4 @@ title: Slides from presentation done by ESET researchers
 # Slides from presentation done by ESET researchers
 
 ## linux.conf.au 2015
-* [Advanced Linux Server-Side Threats: How they work and what you can do about them](2015-01-16_linux.conf.au/advanced-linux-server-side-threats.html)
-
+* [Advanced Linux Server-Side Threats: How they work and what you can do about them](2015-01-16_linux.conf.au/advanced-linux-server-side-threats.html) by Olivier Bilodeau [ [video](https://www.youtube.com/watch?v=L9tjcB_ij-0) ]
