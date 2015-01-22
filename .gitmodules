@@ -1,0 +1,3 @@
+[submodule "2015-01-16_linux.conf.au/reveal.js"]
+	path = 2015-01-16_linux.conf.au/reveal.js
+	url = https://github.com/eset/reveal.js.git

