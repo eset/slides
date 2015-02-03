@@ -4,3 +4,6 @@
 [submodule "2014-11-14_csaw-threads/reveal.js"]
 	path = 2014-11-14_csaw-threads/reveal.js
 	url = https://github.com/eset/reveal.js.git
+[submodule "2014-10-15_linuxcon-europe/reveal.js"]
+	path = 2014-10-15_linuxcon-europe/reveal.js
+	url = https://github.com/eset/reveal.js.git
