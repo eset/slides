@@ -5,7 +5,7 @@ title: Slides from presentation done by ESET researchers
 # Slides from presentation done by ESET researchers
 
 ## Hackfest 2015
-* [Internet of {Things,Threats}](2015-11-06_hackfest/Internet-of-ThingsThreats.html) by Olivier Bilodeau and Thomas Dupuy [ [video](https://www.youtube.com/watch?v=Xcgz0cBmcng) | [pdf](2015-11-06_hackfest/Internet-of-ThingsThreats.html) ]
+* [Internet of {Things,Threats}](2015-11-06_hackfest/Internet-of-ThingsThreats.html) by Olivier Bilodeau and Thomas Dupuy [ [video](https://www.youtube.com/watch?v=Xcgz0cBmcng), [pdf](2015-11-06_hackfest/Internet-of-ThingsThreats.html) ]
 
 ## Virus Bulletin 2015
 * [Linux/Moose endangered or extinct? An update on this atypical embedded Linux botnet](2015-10-01_virusbulletin/linux-moose-endangered-or-extinct.html) by Olivier Bilodeau [ [pdf](2015-10-01_virusbulletin/linux-moose-endangered-or-extinct.pdf) ]
