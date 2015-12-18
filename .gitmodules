@@ -9,5 +9,5 @@
 	url = https://github.com/eset/reveal.js.git
 [submodule "2015-10-01_virusbulletin/reveal.js"]
 	path = 2015-10-01_virusbulletin/reveal.js
-	url = git@github.com:eset/reveal.js.git
+	url = https://github.com/eset/reveal.js.git
 	branch = eset-theme-2014
