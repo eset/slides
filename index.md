@@ -4,6 +4,9 @@ title: Slides from presentation done by ESET researchers
 
 # Slides from presentation done by ESET researchers
 
+## Botconf 2015
+* [A Moose Once Bit My Honeypot - A Story of an Embedded Linux Botnet](2015-12-04_botconf/a-moose-once-bit-my-honeypot.html) by Olivier Bilodeau [ [pdf](2015-12-04_botconf/a-moose-once-bit-my-honeypot.pdf) ]
+
 ## Hackfest 2015
 * [Internet of {Things,Threats}](2015-11-06_hackfest/Internet-of-ThingsThreats.html) by Olivier Bilodeau and Thomas Dupuy [ [video](https://www.youtube.com/watch?v=Xcgz0cBmcng), [pdf](2015-11-06_hackfest/Internet-of-ThingsThreats.html) ]
 

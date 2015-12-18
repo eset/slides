@@ -1,0 +1,248 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><title>A Moose Once Bit My Honeypot</title><meta content="yes" name="apple-mobile-web-app-capable" /><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" /><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" name="viewport" /><link href="reveal.js/css/reveal.css" rel="stylesheet" /><link rel="stylesheet" href="reveal.js/css/theme/eset.css" id="theme" /><link href="reveal.js/lib/css/zenburn.css" rel="stylesheet" /><script>document.write( '<link rel="stylesheet" href="reveal.js/css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );</script></head><body><div class="reveal"><div class="slides"><section id="_a_moose_once_bit_my_honeypot"><h2>A Moose Once Bit My Honeypot</h2><div class="paragraph"><p>A Story of an Embedded Linux Botnet</p></div>
+<div class="paragraph small"><small>by Olivier Bilodeau (<a href="https://twitter.com/obilodeau">@obilodeau</a>)</small></div></section>
+<section id="__apropos"><h2>$ apropos</h2><div class="ulist"><ul><li><p>Embedded Linux Malware</p></li><li><p>Moose DNA (description)</p></li><li><p>Moose Herding (the Operation)</p></li><li><p>What&#8217;s New?</p></li><li><p>Take Aways</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>sprinkled with lessons learned the hard way</p></li><li><p>and design decisions</p></li><li><p>and some code</p></li><li><p>but before we start right away</p></li></ul></div></aside></section>
+<section id="__whoami"><h2>$ whoami</h2><div class="ulist"><ul><li><p>Malware Researcher at ESET</p></li><li><p>Infosec lecturer at ETS University in Montreal</p></li><li><p>Previously</p><div class="ulist"><ul><li><p>infosec developer, network admin, linux system admin</p></li></ul></div></li><li><p>Co-founder Montrehack (hands-on security workshops)</p></li><li><p>Founder NorthSec Hacker Jeopardy</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>done as ESET now at GoSecure in charge of research</p></li><li><p>noticed that the whoami joke is getting very popular&#8230;&#8203;</p></li></ul></div></aside></section>
+<section id="_embedded_linux_malware"><h2>Embedded Linux Malware</h2><div class="paragraph"><p>What marketing likes to call "Internet of Things Malware"</p></div>
+<aside class="notes"><div class="paragraph"><p>next: definition</p></div></aside></section>
+<section id="_malware_running_on_an_embedded_linux_system"><h2>Malware Running On An Embedded Linux System</h2><aside class="notes"><div class="paragraph"><p>tada!</p></div></aside></section>
+<section id="_like"><h2>Like</h2><div class="ulist"><ul><li><p><strong>consumer routers</strong></p></li><li><p>DVR</p></li><li><p>Smart TVs</p></li><li><p>IP Camera monitoring systems</p></li><li><p>&#8230;&#8203;</p></li></ul></div></section>
+<section id="_caracteristics_of_embedded_linux_systems"><h2>Caracteristics of Embedded Linux Systems</h2><div class="ulist"><ul><li><p>Small amount of memory</p></li><li><p>Small amount of flash</p></li><li><p>Non x86 architectures: ARM, MIPS</p></li><li><p>Wide-variety of libc implementations / versions</p></li><li><p>Same ABI-compatible Linux kernel (2.4 &lt; x &lt; 4.3)</p></li><li><p>Support ELF binaries</p></li><li><p>Rarely an integrated UI</p></li><li><p>Networked</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Linux' hardcore approach to ABI compatibility means statically linked
+binaries will run pretty much anywhere</p></li><li><p>Attractive: lots of potential victims</p></li></ul></div></aside></section>
+<section id="_why_threats_on_these_systems_matters"><h2>Why Threats On These Systems Matters?</h2><div class="ulist"><ul><li><p>Hard to detect</p></li><li><p>Hard to remediate</p></li><li><p>Hard to fix</p></li><li><p>Low hanging fruit for bad guys</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>detect: no AV, interacts w/ outside network</p></li><li><p>remediate: no shell</p></li><li><p>fix: no vendor updates</p></li><li><p>low hanging fruit: easy to build botnet and no one cares</p></li></ul></div></aside></section>
+<section id="_it_s_real"><h2>It&#8217;s Real</h2><div class="ulist"><ul><li><p>Several cases disclosed in the last two years</p></li><li><p>A lot of same-old background noise (DDoSer)</p></li><li><p>Things are only getting worse</p></li></ul></div></section>
+<section data-background="images/headline-incapsula.png" data-background-size="contain"></section>
+<section data-background="images/headline-eset-rbrute.png" data-background-size="contain"></section>
+<section data-background="images/headline-linux-ddos.png" data-background-size="contain"></section>
+<section data-background="images/headline-krebs.png" data-background-size="contain"></section>
+<section data-background="images/headline-bbc-reincarna.png" data-background-size="contain"></section>
+<section data-background="images/headline-register-barbie.png" data-background-size="contain"><aside class="notes">and future targets</aside></section>
+<section id="_wait_is_iot_malware_really_about_things"><h2>Wait, is IoT malware really about things?</h2></section>
+<section id="_no_not_yet" data-background="#125F79"><h2>No. Not yet.</h2><aside class="notes"><div class="ulist"><ul><li><p>Affected yes but collateral dammage</p></li><li><p>so what is affected?</p></li></ul></div></aside></section>
+<section data-background="images/lots-of-routers.png" data-background-size="contain"><aside class="notes"><div class="ulist"><ul><li><p>or better represented by what they are worth in terms of security</p></li></ul></div></aside></section>
+<section data-background="images/electronic-waste.jpg" data-background-size="contain"><aside class="notes"><div class="ulist"><ul><li><p>but I understand, market pressure and all</p></li><li><p>still things will have to change&#8230;&#8203;</p></li><li><p>more "things" will be malware victim if industry doesn&#8217;t do anything</p></li></ul></div></aside></section>
+<section id="_so_what_kind_of_malware_can_we_find_on_such_insecure_devices"><h2>So what kind of malware can we find on such insecure devices?</h2><div class="ulist"><ul><li><p>Linux/Aidra</p></li><li><p>Linux/Bassobo</p></li><li><p>ChinaZ family (XOR.DDoS, &#8230;&#8203;)</p></li><li><p>Linux/Dofloo</p></li><li><p>Linux/DNSAmp (Mr Black, BillGates)</p></li><li><p>Linux/Gafgyt (LizardStresser)</p></li><li><p>Linux/Hydra</p></li><li><p>Linux/Tsunami</p></li><li><p>&#8230;&#8203;</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>with this, lets dive into the Linux/Moose story</p></div></aside></section>
+<section id="_lesson_learned_0" data-background="#125F79"><h2>Lesson Learned #0</h2><div class="paragraph"><p>Statically-linked stripped binaries</p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>statically linked: libraries are inlined</p></li><li><p>stripped: no debugging symbols</p></li></ul></div></aside></section>
+<section id="_static_stripped_elf_primer"><h2>Static/stripped ELF primer</h2><div class="ulist"><ul><li><p>No imports (library calls) present</p></li><li><p>All the code bundled together down to kernel syscall</p></li><li><p>Disassembler (if available for arch) doesn&#8217;t help much</p></li></ul></div>
+<aside class="notes">just to give you a sense</aside></section>
+<section id="_linux_moose_binary_in_ida"><h2>Linux/Moose binary in IDA</h2><div class="paragraph"><p><span class="image"><img src="images/ELF-static-stripped.png" alt="ELF static stripped" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>so all of this needs to be analyzed</p></li><li><p>not simple code to analyze</p></li></ul></div></aside></section>
+<section id="_printf_family"><h2>printf family</h2><div class="paragraph"><p><span class="image"><img src="images/ELF-fct-printf-proximity.png" alt="ELF fct printf proximity" /></span></p></div></section>
+<section data-background-size="contain" data-background-image="images/ELF-fct-proximity-graph.png"><aside class="notes">proximity view, now deeper into _vfprintf_internal</aside></section>
+<section data-background-size="contain" data-background-image="images/deeper.jpg"></section>
+<section data-background-size="contain" data-background-image="images/ELF-fct-_vfprintf_internal-graph.png"><aside class="notes">And there is not a single syscall in that code. And you have to figure it out!</aside></section>
+<section id="_ecosystem_makes_it_worst_for_reversers"><h2>Ecosystem makes it worst [for reversers]</h2><div class="ulist"><ul><li><p>GCC and GNU libc are always changing so compiled binaries always change</p></li><li><p>Little IDA FLIRT signatures available (if any)</p></li><li><p>Various C libraries: µClibc, eglibc, glibc, musl, &#8230;&#8203;</p></li></ul></div></section>
+<section id="_a_failed_attempt"><h2>A Failed Attempt</h2><div class="ulist"><ul><li><p>Map syscalls with IDA script</p></li><li><p>But libc is too big</p></li><li><p>Still too much code to RE</p></li><li><p>Provided tool: <a href="https://github.com/eset/malware-research/blob/master/moose/ida/mips_identify_syscalls.py" class="bare">https://github.com/eset/malware-research/blob/master/moose/ida/mips_identify_syscalls.py</a></p></li></ul></div></section>
+<section id="_better_solution"><h2>Better Solution</h2><div class="ulist"><ul><li><p>Reproduce environment (arch, libc/compiler versions)</p></li><li><p>Build libraries w/ symbols under same conditions</p></li><li><p>Use bindiff to map library functions</p></li><li><p>Focus on malware code</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>sounds easier than it actually is</p></li><li><p>one of the ways that worked for us, probably many others I&#8217;m interested to
+hear about!</p></li><li><p>here&#8217;s what it gives</p></li></ul></div></aside></section>
+<section data-background-size="contain" data-background-image="images/ELF-bindiff-mapped.png"><aside class="notes"><div class="ulist"><ul><li><p>uclibc 0.9.33 from openwrt toolchain exact revision used by moose</p></li><li><p>more than 225 functions mapped with high confidence / high similarity</p></li></ul></div></aside></section>
+<section id="_lesson_0" data-background="#797620"><h2>Lesson #0</h2><div class="ulist"><ul><li><p>Going down to syscalls is too long in large binaries</p></li><li><p>Find a close match of C library</p></li><li><p>Build with symbols</p></li><li><p>Bindiff it (or maybe FLIRT it)</p></li></ul></div></section>
+<section id="_lesson_learned_1" data-background="#125F79"><h2>Lesson Learned #1</h2><div class="paragraph"><p>Be careful of strings and AV variant names</p></div></section>
+<section id="_anti_virus_variants"><h2>Anti-Virus Variants</h2></section>
+<section data-background-size="contain" data-background-image="images/detection.png"><aside class="notes"><div class="ulist"><ul><li><p>Due to strings threat was misclassified</p></li><li><p>Classified as a Bitcoin miner</p></li><li><p>But was only killing bitcoin mining process</p></li></ul></div></aside></section>
+<section data-background-size="contain" data-background-image="images/bad-intel.jpg"></section>
+<section id="_and_strings"><h2>and Strings</h2><div class="listingblock"><div class="content"><pre class="highlight"><code>$ strings moose_mips.elf
+[...]
+cat /proc/cpuinfo
+GET /xx/rnde.php?p=%d&amp;f=%d&amp;m=%d HTTP/1.1
+Host: www.getcool.com
+Connection: Keep-Alive
+127.0.0.1
+[...]</code></pre></div></div>
+<aside class="notes"><div class="ulist"><ul><li><p>analyst we contacted requested a takedown on getcool without asking us first</p></li><li><p>1st NOT COOL</p></li><li><p>plus he was wrong, host header was unrelated</p></li></ul></div></aside></section>
+<section id="_lesson_1" data-background="#797620"><h2>Lesson #1</h2><div class="ulist"><ul><li><p>Be careful with detection names</p></li><li><p>Don&#8217;t request domain take down based on output of <code>strings</code></p></li><li><p>and don&#8217;t do so for other people&#8217;s research!</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>detection name are important to customers</p></li><li><p>..</p></li><li><p>at least not w/o asking first</p></li></ul></div></aside></section>
+<section id="_misleading_strings"><h2>Misleading Strings</h2><div class="paragraph"><p><span class="image"><img src="images/design-good.png" alt="design good" /></span></p></div>
+<aside class="notes">creates confusion in industry good job operator</aside></section>
+<section id="_moose_dna" data-background="#125F79"><h2>Moose DNA</h2><div class="paragraph"><p>aka Malware description</p></div>
+<div class="paragraph small"><small>Hang tight, this is a recap</small></div>
+<aside class="notes"><div class="paragraph"><p>gory details all in the report</p></div></aside></section>
+<section id="_linux_moose"><h2>Linux/Moose</h2><div class="ulist"><ul><li><p>Discovered in November 2014</p></li><li><p>Thoroughly analyzed in early 2015</p></li><li><p>Published a report in late May 2015</p></li></ul></div>
+<aside class="notes">went to recon and then its botconf CFP time</aside></section>
+<section id="_linux_moose_2"><h2>Linux/Moose&#8230;&#8203;</h2><div class="paragraph"><p>Named after the string "elan" present in the malware executable</p></div>
+<div class="paragraph"><p><span class="image"><img src="images/elan-strings.png" alt="elan strings" /></span></p></div>
+<aside class="notes"><div class="paragraph"><p>Lets get this out of the way.</p></div>
+<div class="paragraph"><p>Elan2 is the file that is downloaded when the malware successfully spreads</p></div></aside></section>
+<section id="_elan_is_french_for"><h2>Elan is French for</h2><div class="paragraph"><p><span class="image"><img src="images/moose-silly.jpg" alt="moose silly" /></span></p></div>
+<aside class="notes"><div class="paragraph"><p>Moose, thus Linux/Moose was born</p></div>
+<div class="paragraph"><p>But after the release of the whitepaper the Internet did some crowd-sourcing</p></div></aside></section>
+<section id="_the_lotus_elan"><h2>The Lotus Elan</h2><div class="paragraph"><p><span class="image"><img src="images/lotus-elan.jpg" alt="lotus elan" /></span></p></div>
+<aside class="notes"><div class="paragraph"><p>And maybe the malware authors were nostalgic of the Lotus Elan</p></div>
+<div class="paragraph"><p>or fan of a famous rock band near here&#8230;&#8203;</p></div></aside></section>
+<section id="_elán"><h2>Elán</h2><div class="paragraph"><p>The Slovak rock band (from 1969 and still active)</p></div></section>
+<section data-background-size="contain" data-background-image="images/Elan-slovak-rock-band.jpg"><aside class="notes">thanks Robert Lipovski for this less obvious
+reference for a Canadian</aside></section>
+<section id="_sample"><h2>Sample</h2><div class="ulist"><ul><li><p>Statically linked stripped ELF binary</p></li><li><p>ARM (GNU EABI and EABI 5)</p></li><li><p>MIPS (little and big endian)</p></li><li><p>No x86 sample found</p></li><li><p>C&amp;C IP in integer form buried in all this code</p></li></ul></div></section>
+<section id="_mips_arm_statically_linked_stripped_no_x86"><h2>MIPS/ARM + statically linked + stripped + no x86</h2><div class="paragraph"><p><span class="image"><img src="images/design-good.png" alt="design good" /></span></p></div>
+<aside class="notes">makes analysts angry, good job operator</aside></section>
+<section id="_strings_not_obfuscated"><h2>Strings not obfuscated</h2><div class="paragraph"><p><span class="image"><img src="images/design-bad.png" alt="design bad" /></span></p></div></section>
+<section id="_network_capabilities"><h2>Network capabilities</h2><div class="ulist"><ul><li><p>Pivot through firewalls</p></li><li><p>Home-made NAT traversal</p></li><li><p>Custom-made Proxy service</p><div class="ulist"><ul><li><p>only available to a set of authorized IP addresses</p></li></ul></div></li><li><p>Remotely configured generic network sniffer</p></li><li><p>DNS Hijacking</p></li></ul></div>
+<aside class="notes"><div class="paragraph"><p>more serious note</p></div>
+<div class="ulist"><ul><li><p>Via infected routers</p></li><li><p>None</p></li><li><p>Supporting both SOCKS and HTTP Proxying, listening on port 10073</p></li><li><p>Configured by the C&amp;C server, sniff on all non /32 and non loopback interfaces</p></li><li><p>DNS: only on new infections and via reconfiguration of the device</p></li></ul></div></aside></section>
+<section id="_lesson_learned_2" data-background="#125F79"><h2>Lesson Learned #2</h2><div class="paragraph"><p>Don&#8217;t assume it&#8217;s custom when it can be a standard protocol</p></div></section>
+<section data-background-size="contain" data-background-image="images/ida_socks.png"><aside class="notes"><div class="ulist"><ul><li><p>this is proxying (both SOCKS 4/5 and HTTP/HTTPS) code</p></li><li><p>1 fct</p></li><li><p>documented all SOCKS field and described protocol</p></li><li><p>colleague told me it&#8217;s SOCKS</p></li><li><p>doh!</p></li></ul></div></aside></section>
+<section id="_proxy_with_access_from_c_c_authorized_ips_only"><h2>Proxy with access from C&amp;C authorized IPs only</h2><div class="paragraph"><p><span class="image"><img src="images/design-good.png" alt="design good" /></span></p></div>
+<aside class="notes">We couldn&#8217;t rely on Internet scans to fingerprint Internet facing malware
+population&#8230;&#8203;</aside></section>
+<section id="_c_c_ip_is_hardcoded"><h2>C&amp;C IP is hardcoded</h2><div class="ulist"><ul><li><p>No fallback domains or DGA</p></li></ul></div>
+<aside class="notes">No DGA!? ;)</aside>
+<div class="paragraph"><p><span class="image"><img src="images/design-bad.png" alt="design bad" /></span></p></div></section>
+<section data-background-size="contain" data-background-image="images/moose-scanner-threads.png"><aside class="notes"><div class="ulist"><div class="title">Worm-like behavior</div><ul><li><p>Tries to replicate via aggressive scanning</p></li><li><p>Will dedicate more resources to scan near current external IP</p></li><li><p>Will also scan on LAN interfaces</p></li><li><p>Will not reinfect an infected device</p></li><li><p>Can replicate across architectures</p></li><li><p>C&amp;C is made aware of new compromises</p></li><li><p>Scans the internet on port 10073 (then 23), witnessed up to 35 threads
+dedicated to scanning</p></li><li><p>MIPS and ARM</p></li><li><p>As you’ll see in the next diagram</p></li></ul></div></aside></section>
+<section id="_attack_vector"><h2>Attack Vector</h2><div class="ulist"><ul><li><p>Telnet credentials bruteforce</p></li><li><p>Wordlist of 304 user/pass entries sent by server</p></li></ul></div></section>
+<section id="_compromise_protocol"><h2>Compromise Protocol</h2><div class="paragraph"><p><span class="image"><img src="images/moose-infection-process.png" alt="moose infection process" /></span></p></div>
+<aside class="notes">C&amp;C is actively involved during a compromise.</aside></section>
+<section id="_can_perform_cross_arch_infections"><h2>Can perform cross-arch infections</h2><div class="paragraph"><p><span class="image"><img src="images/design-good.png" alt="design good" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Detect arch and push proper binary. Harder to collect samples</p></li><li><p>C&amp;C can know what IP to expect new connections from</p></li><li><p>also can gather additional data</p></li></ul></div></aside></section>
+<section id="_no_further_spreading_if_c_c_is_down"><h2>No further spreading if C&amp;C is down</h2><div class="paragraph"><p><span class="image"><img src="images/design-bad.png" alt="design bad" /></span></p></div></section>
+<section id="_missing_persistence"><h2>Missing: Persistence</h2><div class="paragraph"><p><span class="image"><img src="images/design-meh.jpg" alt="design meh" width="400px" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>probably hard to do in portable fashion (fs persistence, etc.)</p></li><li><p>can always come back w/ weak creds</p></li></ul></div></aside></section>
+<section id="_literally_kills_competition"><h2>Literally kills competition</h2><div class="paragraph"><p><span class="image"><img src="images/design-good.png" alt="design good" /></span></p></div>
+<aside class="notes">bitcoin miners, DDoS, fights for resources</aside></section>
+<section data-background-size="contain" data-background-image="images/moose-components.png"><aside class="notes">in overview</aside></section>
+<section id="_lesson_learned_3" data-background="#125F79"><h2>Lesson Learned #3</h2><div class="paragraph"><p>Less RE, more honeypot!</p></div></section>
+<section id="_stuck"><h2>Stuck</h2><aside class="notes"><div class="ulist"><ul><li><p>Even if we understood sample we were stuck</p></li><li><p>in sandboxes nothing was happening</p></li><li><p>so we deployed a qemu VM in the cloud</p></li></ul></div></aside></section>
+<section id="_solution"><h2>Solution</h2><div class="ulist"><ul><li><p>Launch the binary in a debian MIPS qemu image</p></li><li><p>Reachable from the Internet</p></li><li><p>Watch it behave</p></li><li><p>Firewall it</p></li></ul></div>
+<aside class="notes">firewall to disarm Internet</aside></section>
+<section id="_hints"><h2>Hints</h2><div class="ulist"><ul><li><p>Aurel images: <a href="https://people.debian.org/~aurel32/qemu/mips/" class="bare">https://people.debian.org/~aurel32/qemu/mips/</a></p></li><li><p>Qemu command:</p><div class="listingblock"><div class="content"><pre class="highlight"><code>qemu-system-mips -M malta \
+        -no-reboot -nographic \
+        -kernel vmlinux-3.2.0-4-4kc-malta \
+        -hda debian_wheezy_mips_standard.qcow2 \
+        -append "root=/dev/sda1 console=ttyS0" \
+        -redir tcp:10073::10073 -redir tcp:22::22 -redir tcp:23::23</code></pre></div></div></li></ul></div></section>
+<section id="_lesson_3" data-background="#797620"><h2>Lesson #3</h2><div class="ulist"><ul><li><p>We were too careful</p></li><li><p>Everything we learned operationally was because of infected host</p></li></ul></div></section>
+<section id="_hard_to_track_malware"><h2>Hard to track malware</h2><div class="paragraph"><p><span class="image"><img src="images/design-good.png" alt="design good" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Hard to reproduce environment required for malware to operate</p></li></ul></div></aside></section>
+<section id="_moose_herding"><h2>Moose Herding</h2><div class="paragraph"><p>The Malware Operation</p></div>
+<aside class="notes"><div class="paragraph"><p>broad espionage and infiltration capability, what did they used it for?</p></div></aside></section>
+<section id="_via_c_c_configuration"><h2>Via C&amp;C Configuration</h2><div class="ulist"><ul><li><p>Network sniffer was used to steal HTTP Cookies</p><div class="ulist"><ul><li><p>Twitter: <code>twll</code>, <code>twid</code></p></li><li><p>Facebook: <code>c_user</code></p></li><li><p>Instagram: <code>ds_user_id</code></p></li><li><p>Google: <code>SAPISID</code>, <code>APISID</code></p></li><li><p>Google Play / Android: <code>LAY_ACTIVE_ACCOUNT</code></p></li><li><p>Youtube: <code>LOGIN_INFO</code></p></li></ul></div></li></ul></div></section>
+<section id="_sniffing_https_cookies"><h2>Sniffing HTTPS Cookies</h2><div class="paragraph"><p><span class="image"><img src="images/design-meh.jpg" alt="design meh" width="400px" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>A nice sniffer but configured to steal HTTPS cookies&#8230;&#8203;</p></li></ul></div></aside></section>
+<section id="_via_proxy_usage_analysis"><h2>Via Proxy Usage Analysis</h2><div class="ulist"><ul><li><p>Nature of traffic</p></li><li><p>Protocol</p></li><li><p>Targeted social networks</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>All based on our honeypot numbers</p></li><li><p>Blue: social network</p></li><li><p>Yellow: botnet</p></li><li><p>Light blue: Other</p></li><li><p>As you can see there is no other traffic in the proxy except for social
+network traffic and a tiny bit of operational traffic</p></li></ul></div></aside></section>
+<section data-background-size="contain" data-background-image="images/proxy-usage_traffic-nature.png"></section>
+<section data-background-size="contain" data-background-image="images/proxy-usage_protocol.png"></section>
+<section data-background-size="contain" data-background-image="images/proxy-usage_targets.png"></section>
+<section id="_75_https_but"><h2>75%+ HTTPS but&#8230;&#8203;</h2></section>
+<section data-background-size="contain" data-background-image="images/https-upgrade.png"><aside class="notes"><div class="paragraph"><p>In some cases we had HTTP before an HTTPS upgrade was done by the server</p></div>
+<div class="olist arabic"><ol class="arabic"><li><p>SOCKS Proxy request and ack</p></li><li><p>HTTPS upgrade for this instagram query</p></li></ol></div></aside></section>
+<section id="_an_example"><h2>An Example</h2><div class="paragraph"><p><span class="image"><img src="images/fraud-example-1.png" alt="fraud example 1" /></span></p></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Allowed us to find a few profiles created by the operator such as this one.</p></li><li><p>Pattern is &lt; 50 follows per accounts</p></li></ul></div></aside></section>
+<section id="_an_example_cont"><h2>An Example (cont.)</h2><div class="paragraph"><p><span class="image"><img src="images/fraud-example-2.png" alt="fraud example 2" /></span></p></div>
+<aside class="notes">In the followed accounts</aside></section>
+<section id="_an_example_cont_2"><h2>An Example (cont.)</h2><div class="paragraph"><p><span class="image"><img src="images/fraud-example-3.png" alt="fraud example 3" /></span></p></div>
+<aside class="notes"><div class="paragraph"><p>Same account went from 3k (and I believe that the scheme already started) to
+11k with almost no posts</p></div>
+<div class="paragraph"><p>From what I know about instagram, I expect a pattern like this to be really
+rare (post / follower / following ratio)</p></div>
+<div class="paragraph"><p>Several examples we found were not SFW. On a thin line between fitness and
+porn. haha</p></div></aside></section>
+<section id="_an_example_cont_3"><h2>An Example (cont.)</h2><div class="paragraph"><p><span class="image"><img src="images/fraud-example-4.png" alt="fraud example 4" /></span></p></div></section>
+<section id="_fraud_hidden_in_https"><h2>Fraud hidden in HTTPS</h2><div class="paragraph"><p><span class="image"><img src="images/design-good.png" alt="design good" /></span></p></div>
+<aside class="notes">blind because 75%+ of traffic is HTTPS. makes assessing impact harder</aside></section>
+<section id="_except_instagram_first_hit"><h2>Except Instagram first hit</h2><div class="paragraph"><p><span class="image"><img src="images/design-bad.png" alt="design bad" /></span></p></div></section>
+<section data-background-size="contain" data-background-image="images/operation_overview.png"><aside class="notes"><div class="ulist"><ul><li><p>Stolen cookies</p></li><li><p>Social network fraud</p></li><li><p>Reproduction</p></li></ul></div></aside></section>
+<section id="_latest_developments" data-background="#125F79"><h2>Latest Developments</h2></section>
+<section id="_whitepaper_impact"><h2>Whitepaper Impact</h2><div class="ulist"><ul><li><p>Few weeks after the publication the C&amp;C servers went dark</p><div class="ulist"><ul><li><p>After a reboot, all affected devices should be cleaned</p></li><li><p>But victims compromised via weak credentials, so they can always reinfect</p></li></ul></div></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>was in contact with hosting provider of C&amp;C</p></li><li><p>trying to help clean 'allegedly' compromised C&amp;C</p></li><li><p>stopped hearing from him until we published</p></li></ul></div></aside></section>
+<section id="_alive_or_dead"><h2>Alive or dead?</h2><div class="paragraph"><p><span class="image"><img src="images/port-10073-stats.png" alt="port 10073 stats" /></span></p></div>
+<aside class="notes">Port 10073 activity</aside></section>
+<section id="_alive_or_dead_cont"><h2>Alive or dead? (cont.)</h2><div class="ulist"><ul><li><p>On the lookout for Moose v2</p></li><li><p>Looked at over 150 new samples targeting embedded Linux platforms</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>yara rules, honeypots, etc.</p></li><li><p>Since the 10073 metric is a poor one since it would be changed by the operators</p></li><li><p>..</p></li></ul></div></aside></section>
+<section id="_found_update"><h2>Found Update</h2><div class="ulist"><ul><li><p>New proxy service port (20012)</p></li><li><p>C&amp;C selection on CLI</p></li><li><p>C&amp;C server returns 404 on unknown bots</p></li><li><p>Still under analysis</p></li><li><p>Still trying to get infected</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>new sample in September, right b4 VB</p></li><li><p>404: can do so because it is involved in infection process</p></li></ul></div></aside></section>
+<section id="_reading_research_papers_and_adapting"><h2>Reading research papers and adapting</h2><div class="paragraph"><p><span class="image"><img src="images/design-very_nice.jpg" alt="design very nice" /></span></p></div></section>
+<section><div class="paragraph"><p><span class="image"><img src="images/port-20012-stats_v2.png" alt="port 20012 stats v2" /></span></p></div></section>
+<section data-background-size="contain" data-background-image="images/port-activity.png"></section>
+<section id="_take_aways" data-background="#125F79"><h2>Take Aways</h2></section>
+<section id="_research_artifacts_released"><h2>Research artifacts released</h2><div class="ulist"><ul><li><p>Python and Shell Scripts</p><div class="ulist"><ul><li><p>Protocol dissectors, fake servers, tshark wrappers</p></li></ul></div></li><li><p>Yara rules</p></li><li><p><a href="https://github.com/eset/malware-ioc/tree/master/moose">IOCs</a></p></li><li><p><a href="https://github.com/eset/malware-research/tree/master/moose" class="bare">https://github.com/eset/malware-research/tree/master/moose</a></p></li></ul></div></section>
+<section id="_embedded_malware"><h2>Embedded malware</h2><div class="ulist"><ul><li><p>Not yet complex</p></li><li><p>Tools and processes need to catch up</p></li><li><p>a low hanging fruit</p></li><li><p>Prevention simple</p></li></ul></div>
+<aside class="notes"><div class="ulist"><ul><li><p>Threats are not as advanced or complex as their Windows counterparts</p></li><li><p>Our tools, visibility and processes will need to be improved</p></li><li><p>Routers and IoT industry are a low hanging fruit for malware operators these days</p></li><li><p>Often times prevention is as simple as changing your default username and password for a strong one</p><div class="ulist"><ul><li><p>That is, until there is another shellshock affecting all Linux-based
+routers&#8230;&#8203;</p></li></ul></div></li><li><p>Friends don’t let friends run routers with default credentials</p></li></ul></div></aside></section>
+<section id="_questions" data-background="#125F79" data-background-size="contain" data-background-image="images/underwear.jpg"><h2>Questions?</h2></section>
+<section id="_questions_2"><h2>Questions?</h2><div class="paragraph"><p>Thank you!</p></div>
+<div class="exampleblock small"><div class="content"><div class="ulist"><ul><li><p><a href="https://twitter.com/obilodeau">@obilodeau</a></p></li><li><p>and special thanks to Thomas Dupuy (@nyx__o)</p></li></ul></div></div></div></section></div></div><script src="reveal.js/lib/js/head.min.js"></script><script src="reveal.js/js/reveal.js"></script><script>// See https://github.com/hakimel/reveal.js#configuration for a full list of configuration options
+Reveal.initialize({
+  // Display controls in the bottom right corner
+  controls: false,
+  // Display a presentation progress bar
+  progress: true,
+  // Display the page number of the current slide
+  slideNumber: false,
+  // Push each slide change to the browser history
+  history: true,
+  // Enable keyboard shortcuts for navigation
+  keyboard: true,
+  // Enable the slide overview mode
+  overview: true,
+  // Vertical centering of slides
+  center: true,
+  // Enables touch navigation on devices with touch input
+  touch: true,
+  // Loop the presentation
+  loop: false,
+  // Change the presentation direction to be RTL
+  rtl: false,
+  // Turns fragments on and off globally
+  fragments: true,
+  // Flags if the presentation is running in an embedded mode,
+  // i.e. contained within a limited portion of the screen
+  embedded: false,
+  // Number of milliseconds between automatically proceeding to the
+  // next slide, disabled when set to 0, this value can be overwritten
+  // by using a data-autoslide attribute on your slides
+  autoSlide: 0,
+  // Stop auto-sliding after user input
+  autoSlideStoppable: true,
+  // Enable slide navigation via mouse wheel
+  mouseWheel: false,
+  // Hides the address bar on mobile devices
+  hideAddressBar: true,
+  // Opens links in an iframe preview overlay
+  previewLinks: false,
+  // Theme (e.g., beige, black, blood, league, moon, night, serif, simple, sky, solarized, white)
+  // NOTE setting the theme in the config no longer works in reveal.js 3.x
+  //theme: Reveal.getQueryHash().theme || 'eset',
+  // Transition style (e.g., none, fade, slide, convex, concave, zoom)
+  transition: Reveal.getQueryHash().transition || 'none',
+  // Transition speed (e.g., default, fast, slow)
+  transitionSpeed: 'default',
+  // Transition style for full page slide backgrounds (e.g., none, fade, slide, convex, concave, zoom)
+  backgroundTransition: 'slide',
+  // Number of slides away from the current that are visible
+  viewDistance: 3,
+  // Parallax background image (e.g., "'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg'")
+  parallaxBackgroundImage: '',
+  // Parallax background size in CSS syntax (e.g., "2100px 900px")
+  parallaxBackgroundSize: '',
+
+  // The "normal" size of the presentation, aspect ratio will be preserved
+  // when the presentation is scaled to fit different resolutions. Can be
+  // specified using percentage units.
+  width: 960,
+  height: 700,
+
+  // Factor of the display size that should remain empty around the content
+  margin: 0.01,
+
+  // Bounds for smallest/largest possible scale to apply to content
+  minScale: 0.2,
+  maxScale: 1.5,
+
+  // Optional libraries used to extend on reveal.js
+  dependencies: [
+      { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+      { src: 'reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+      { src: 'reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+      { src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+      { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+      { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+  ]
+});</script></body></html>

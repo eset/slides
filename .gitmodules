@@ -15,3 +15,7 @@
 	path = 2015-11-06_hackfest/reveal.js
 	url = https://github.com/eset/reveal.js.git
 	branch = eset-theme-2014
+[submodule "2015-12-04_botconf/reveal.js"]
+	path = 2015-12-04_botconf/reveal.js
+	url = https://github.com/eset/reveal.js.git
+	branch = eset-theme-2014
