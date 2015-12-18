@@ -4,6 +4,9 @@ title: Slides from presentation done by ESET researchers
 
 # Slides from presentation done by ESET researchers
 
+## Virus Bulletin 2015
+* [Linux/Moose endangered or extinct? An update on this atypical embedded Linux botnet](2015-10-01_virusbulletin/linux-moose-endangered-or-extinct.html) by Olivier Bilodeau [ [pdf](2015-10-01_virusbulletin/linux-moose-endangered-or-extinct.pdf) ]
+
 ## linux.conf.au 2015
 * [Advanced Linux Server-Side Threats: How they work and what you can do about them](2015-01-16_linux.conf.au/advanced-linux-server-side-threats.html) by Olivier Bilodeau [ [video](https://www.youtube.com/watch?v=L9tjcB_ij-0) ]
 
